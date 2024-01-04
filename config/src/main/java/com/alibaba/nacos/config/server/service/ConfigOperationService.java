@@ -99,6 +99,7 @@ public class ConfigOperationService {
             if (StringUtils.isBlank(configForm.getTag())) {
                 configOperateResult = configInfoPersistService.insertOrUpdate(configRequestInfo.getSrcIp(),
                         configForm.getSrcUser(), configInfo, configAdvanceInfo);
+                // 发布配置变更事件
                 ConfigChangePublisher.notifyConfigChange(
                         new ConfigDataChangeEvent(false, configForm.getDataId(), configForm.getGroup(),
                                 configForm.getNamespaceId(), configOperateResult.getLastModified()));

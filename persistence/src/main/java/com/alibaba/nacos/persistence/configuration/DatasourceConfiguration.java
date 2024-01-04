@@ -36,6 +36,7 @@ public class DatasourceConfiguration implements ApplicationContextInitializer<Co
     
     /**
      * Inline storage value = ${nacos.standalone}.
+     * 如果nacos.standalone设置为true，则使用内嵌存储，否则使用外部存储。
      */
     public static boolean embeddedStorage = EnvUtil.getStandaloneMode();
     

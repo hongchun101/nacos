@@ -101,17 +101,20 @@ public class AsyncNotifyService {
                     String tag = evt.tag;
                     MetricsMonitor.incrementConfigChangeCount(tenant, group, dataId);
                     
+                    // 获取集群中所有成员
                     Collection<Member> ipList = memberManager.allMembers();
                     
                     // In fact, any type of queue here can be
                     Queue<NotifySingleRpcTask> rpcQueue = new LinkedList<>();
                     
+                    // 对于所有的成员都构造一个rpc通知任务
                     for (Member member : ipList) {
                         // grpc report data change only
                         rpcQueue.add(
                                 new NotifySingleRpcTask(dataId, group, tenant, tag, dumpTs, evt.isBeta, evt.isBatch,
                                         member));
                     }
+                    // 异步rpc执行通知
                     if (!rpcQueue.isEmpty()) {
                         ConfigExecutor.executeAsyncNotify(new AsyncRpcTask(rpcQueue));
                     }
@@ -152,6 +155,7 @@ public class AsyncNotifyService {
                 syncRequest.setBatch(task.isBatch);
                 syncRequest.setTenant(task.getTenant());
                 Member member = task.member;
+                // 如果成员节点是自己
                 if (memberManager.getSelf().equals(member)) {
                     if (syncRequest.isBeta()) {
                         dumpService.dumpBeta(syncRequest.getDataId(), syncRequest.getGroup(), syncRequest.getTenant(),
@@ -168,10 +172,13 @@ public class AsyncNotifyService {
                     }
                     continue;
                 }
+                // 如果成员节点不是自己
                 String event = getNotifyEvent(task);
                 
+                // 如果存在这个成员
                 if (memberManager.hasMember(member.getAddress())) {
                     // start the health check and there are ips that are not monitored, put them directly in the notification queue, otherwise notify
+                    // 判断成员状态是否不健康
                     boolean unHealthNeedDelay = isUnHealthy(member.getAddress());
                     if (unHealthNeedDelay) {
                         // target ip is unhealthy, then put it in the notification list
@@ -179,11 +186,13 @@ public class AsyncNotifyService {
                                 task.getLastModified(), InetUtils.getSelfIP(), event,
                                 ConfigTraceService.NOTIFY_TYPE_UNHEALTH, 0, member.getAddress());
                         // get delay time and set fail count to the task
+                        // 延迟后处理
                         asyncTaskExecute(task);
                     } else {
                         
                         // grpc report data change only
                         try {
+                            // 同步配置变更
                             configClusterRpcClientProxy.syncConfigChange(member, syncRequest,
                                     new AsyncRpcNotifyCallBack(task));
                         } catch (Exception e) {
@@ -193,6 +202,7 @@ public class AsyncNotifyService {
                         
                     }
                 } else {
+                    // 如果成员已经下线 则不处理
                     //No nothing if  member has offline.
                 }
                 

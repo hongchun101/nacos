@@ -92,6 +92,7 @@ import static com.alibaba.nacos.persistence.repository.RowMapperManager.MAP_ROW_
  * @author lixiaoshuang
  */
 @SuppressWarnings({"PMD.MethodReturnWrapperTypeRule", "checkstyle:linelength"})
+// 根据神抽是嵌入式存储 选择对应的service加载
 @Conditional(value = ConditionOnEmbeddedStorage.class)
 @Service("embeddedConfigInfoPersistServiceImpl")
 public class EmbeddedConfigInfoPersistServiceImpl implements ConfigInfoPersistService {
